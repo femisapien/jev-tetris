@@ -227,6 +227,92 @@ export function createGeminiPlayer(apiKey, { endpoint = "api/gemini", model = GE
   };
 }
 
+// ---- GPT-6 Luna (OpenAI Decisions API) ----------------------------------------------
+// OpenAI's decision model answers typed questions over an input, much like
+// Jev: one Choice question whose choices are the controls that work right now.
+// developers.openai.com/api/docs/guides/decisions
+
+export const LUNA_MODEL = "gpt-6-luna";
+export const LUNA_PRICE = { input: 0.1 / 1e6, output: 0 }; // $0.10 per MTok input, no output charge
+
+export function buildLunaRequest(stepInfo, actions) {
+  const { board, piece, state, nextPiece, stats, linesCleared, versus } = stepInfo;
+  const seen = describeSituation(board, piece, state, stats);
+  const input = JSON.stringify(
+    {
+      rules: RULES + (versus ? " This is a versus match: cleared lines attack the opponent." : ""),
+      columns: "numbered 1 to 10 from left to right; heights count rows from the floor, 20 is the top",
+      falling_piece: seen.falling_piece,
+      stack: seen.stack,
+      next_piece: nextPiece,
+      lines_cleared_so_far: linesCleared,
+    },
+    null,
+    0,
+  );
+  return {
+    model: LUNA_MODEL,
+    input,
+    questions: [
+      {
+        type: "choice",
+        name: "move",
+        instructions: `Which move should the player make now with the falling piece, given the stack? ${OBJECTIVE.join(" ")}`,
+        choices: actions.map((a) => ({ value: a.id, description: CONTROLS[a.id] })),
+      },
+    ],
+  };
+}
+
+export function parseLunaChoice(response, actions) {
+  const byId = new Map(actions.map((a) => [a.id, a]));
+  const answer = (response?.answers || []).find((a) => a.name === "move") || response?.answers?.[0];
+  if (!answer) return { chosen: null, confidence: 0 };
+  const ranked = (answer.probabilities || [])
+    .filter((p) => byId.has(p.value))
+    .sort((a, b) => b.probability - a.probability);
+  const chosen = byId.get(answer.choice) || null;
+  return { chosen, ranked, confidence: answer.confidence ?? ranked[0]?.probability ?? 0 };
+}
+
+export function createLunaPlayer(apiKey, { endpoint = "api/openai" } = {}) {
+  return {
+    name: "GPT-6 Luna",
+    short: "Luna",
+    model: LUNA_MODEL,
+    async act(stepInfo, actions, signal) {
+      const body = buildLunaRequest(stepInfo, actions);
+      const started = performance.now();
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-openai-key": apiKey },
+        body: JSON.stringify(body),
+        signal,
+      });
+      const latencyMs = performance.now() - started;
+      const text = await res.text();
+      const json = readJson(text);
+      if (!res.ok) {
+        const err = new Error(json?.error?.message || text || `HTTP ${res.status}`);
+        err.status = res.status;
+        throw err;
+      }
+      const { chosen, confidence } = parseLunaChoice(json, actions);
+      const u = json.usage || {};
+      const inputTokens = u.input_tokens || u.prompt_tokens || 0;
+      const outputTokens = u.output_tokens || 0;
+      return {
+        chosen,
+        latencyMs,
+        inputTokens,
+        outputTokens,
+        cost: inputTokens * LUNA_PRICE.input,
+        note: chosen ? `confidence ${Number(confidence).toFixed(2)}` : `invalid reply ${JSON.stringify(json.answers || json).slice(0, 60)}`,
+      };
+    },
+  };
+}
+
 // ---- Laya (local) ---------------------------------------------------------------------
 // Laya is an open-weight typed-decision model (Convai Innovations; MLX port by
 // mizorewww as laya-mlx). It runs on the visitor's machine behind
@@ -335,5 +421,6 @@ export function createLayaPlayer({ endpoint = LAYA_DEFAULT_ENDPOINT } = {}) {
 export const OPPONENTS = {
   haiku: { name: "Claude Haiku 4.5", short: "Haiku 4.5", badge: "haiku", label: `${HAIKU_MODEL} · Anthropic`, keyName: "Anthropic", create: (key) => createHaikuPlayer(key) },
   gemini: { name: "Gemini 3.8 Flash", short: "Gemini 3.8", badge: "gemini", label: `${GEMINI_MODEL} · Google`, keyName: "Gemini", create: (key) => createGeminiPlayer(key) },
+  luna: { name: "GPT-6 Luna", short: "Luna", badge: "luna", label: `${LUNA_MODEL} · OpenAI Decisions`, keyName: "OpenAI", create: (key) => createLunaPlayer(key) },
   laya: { name: "Laya", short: "Laya", badge: "laya", label: "laya · local, open weights", keyName: "server address", create: (endpoint) => createLayaPlayer({ endpoint }) },
 };

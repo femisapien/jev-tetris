@@ -271,3 +271,22 @@ test("Laya gets the board as text and the same controls", async () => {
   for (const text of Object.values(request.questions.move.criteria)) assert.ok(text.split(/\s+/).length <= 20, text);
 });
 
+test("Luna request is one Choice over the offered controls and the parser reads the answer", async () => {
+  const { buildLunaRequest, parseLunaChoice, LUNA_MODEL } = await import("../public/players.js");
+  const board = emptyBoard();
+  const state = { rotation: 0, x: SPAWN_X, y: 0 };
+  const actions = enumerateActions(board, "Z", state);
+  const req = buildLunaRequest({ board, piece: "Z", nextPiece: "L", state, stats: boardStats(board), linesCleared: 0, versus: true }, actions);
+  assert.equal(req.model, LUNA_MODEL);
+  assert.equal(typeof req.input, "string");
+  assert.match(req.input, /flat, top pair to the left/);
+  assert.equal(req.questions.length, 1);
+  assert.equal(req.questions[0].type, "choice");
+  assert.deepEqual(req.questions[0].choices.map((c) => c.value), actions.map((a) => a.id));
+  const reply = { answers: [{ type: "choice", name: "move", choice: "left", probabilities: [{ value: "left", probability: 0.6 }, { value: "drop", probability: 0.4 }], confidence: 0.5 }] };
+  const { chosen, ranked, confidence } = parseLunaChoice(reply, actions);
+  assert.equal(chosen.id, "left");
+  assert.equal(ranked[0].value, "left");
+  assert.equal(confidence, 0.5);
+  assert.equal(parseLunaChoice({ answers: [{ name: "move", choice: "jump", probabilities: [] }] }, actions).chosen, null);
+});

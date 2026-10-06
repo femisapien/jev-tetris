@@ -1,12 +1,14 @@
 # Jev vs the LLMs: real-time Tetris
 
 Two AI models play Tetris against each other in real time. [Jev](https://docs.typesafe.ai), TypeSafe's
-System One model, faces Claude Haiku 4.5, Gemini 3.8 Flash, or [Laya](https://github.com/NandhaKishorM/laya),
-an open-weight typed-decision model running on your own machine. Same piece sequence, same options, same
+System One model, faces Claude Haiku 4.5, Gemini 3.8 Flash, OpenAI's GPT-6 Luna (through the
+[Decisions API](https://developers.openai.com/api/docs/guides/decisions), the closest cousin to Jev's
+interface), or [Laya](https://github.com/NandhaKishorM/laya), an open-weight typed-decision model
+running on your own machine. Same piece sequence, same options, same
 clock. Every line you clear lands on your opponent's board as a garbage row. Whoever tops out first loses.
 
 **Play it live:** [jev-tetris.vercel.app](https://jev-tetris.vercel.app)
-(bring a TypeSafe key plus an Anthropic or Gemini key; the proxy stores nothing. Laya needs no key,
+(bring a TypeSafe key plus an Anthropic, Gemini or OpenAI key; the proxy stores nothing. Laya needs no key,
 just its local server, see [Laya, the open-weight opponent](#laya-the-open-weight-opponent)).
 
 ![Jev vs Claude Haiku, versus mode](docs/battle.png)
@@ -35,6 +37,11 @@ Each side runs its own real-time game loop on a seeded piece sequence shared by 
   about what a move would lead to, and no strategy. The objective is the game's own, survive and
   clear lines. `node tools/jev-request-sample.mjs` prints the exact request Jev sees for a sample
   state; [`docs/jev-request-sample.json`](docs/jev-request-sample.json) is its output.
+- **Same information for every model.** Jev answers a Choice question; Haiku and Gemini answer
+  through a forced `make_move` function call whose `move` is an enum of the same controls; GPT-6
+  Luna answers one Choice question over the same controls through the Decisions API; Laya gets the
+  same description as one paragraph. Pick the opponent in the setup card or with `?opponent=gemini`,
+  `?opponent=luna` or `?opponent=laya`.
 - **Stats per model.** Lines, pieces, garbage sent and received, average and min/max latency, missed
   deadlines, invalid answers, model calls, tokens in and out, cost and cost per move, live under each
   board and in a side-by-side table when the match ends.
@@ -217,6 +224,7 @@ Optional environment variables:
 | `TYPESAFE_API_BASE` | Override the TypeSafe API base URL. |
 | `ANTHROPIC_API_BASE` | Override the Anthropic API base URL. |
 | `GEMINI_API_BASE` | Override the Gemini API base URL. |
+| `OPENAI_API_BASE` | Override the OpenAI API base URL. |
 
 Laya needs none of these: the page talks to `tools/laya_server.py` directly.
 
@@ -239,12 +247,13 @@ server.mjs            local static server + proxies
 lib/typesafe.mjs      TypeSafe proxy logic shared by server.mjs and api/
 lib/anthropic.mjs     Anthropic Messages API proxy for the battle
 lib/gemini.mjs        Gemini generateContent proxy for the battle
+lib/openai.mjs        OpenAI Decisions API proxy for the battle
 api/*.js              the same proxies as Vercel serverless functions
 vercel.json           Vercel config (static public/, functions in api/)
 public/index.html     battle page (+ battle.css, battle.js)
 public/play.html      human vs Jev (+ play.js)
 public/arena.js       shared two-board machinery: sides, drawing, stats, garbage, gravity ramp, model loop
-public/players.js     Jev, Claude Haiku, Gemini and Laya players for the battle
+public/players.js     Jev, Claude Haiku, Gemini, GPT-6 Luna and Laya players for the battle
 tools/laya_server.py  local HTTP wrapper around Laya (laya-mlx or laya) with the TypeSafe request shape
 public/solo.html      single-player page (+ style.css, app.js)
 public/battle.html    redirect to the front page for old links

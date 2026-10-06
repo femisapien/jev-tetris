@@ -42,7 +42,7 @@ export const PRESENT = new URLSearchParams(location.search).has("present");
 
 // localStorage keys shared by the battle and presentation pages, so keys
 // remembered on one page are available on the other.
-export const STORAGE = { jev: "jev_tetris_api_key", haiku: "jev_tetris_anthropic_key", gemini: "jev_tetris_gemini_key", laya: "jev_tetris_laya_endpoint" };
+export const STORAGE = { jev: "jev_tetris_api_key", haiku: "jev_tetris_anthropic_key", gemini: "jev_tetris_gemini_key", luna: "jev_tetris_openai_key", laya: "jev_tetris_laya_endpoint" };
 if (PRESENT) document.body.classList.add("present");
 
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

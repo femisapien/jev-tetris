@@ -64,12 +64,14 @@
         <select id="opponent">
           <option value="haiku" selected>Claude Haiku 4.5 (Anthropic)</option>
           <option value="gemini">Gemini 3.8 Flash (Google)</option>
+            <option value="luna">GPT-6 Luna (OpenAI Decisions)</option>
           <option value="laya">Laya (local, open weights)</option>
         </select>
       </label>
       <label class="field">TypeSafe key for Jev <input id="jevKey" type="password" placeholder="apikey_…" autocomplete="off" spellcheck="false" /></label>
       <label class="field" id="haikuKeyField">Anthropic key <input id="haikuKey" type="password" placeholder="sk-ant-…" autocomplete="off" spellcheck="false" /></label>
       <label class="field hidden" id="geminiKeyField">Gemini key <input id="geminiKey" type="password" placeholder="AIza…" autocomplete="off" spellcheck="false" /></label>
+        <label class="field hidden" id="lunaKeyField">OpenAI key <input id="lunaKey" type="password" placeholder="sk-…" autocomplete="off" spellcheck="false" /></label>
       <label class="field hidden" id="layaField">Laya server <input id="layaEndpoint" type="text" value="http://localhost:8765" autocomplete="off" spellcheck="false" /></label>
       <label class="remember"><input id="remember" type="checkbox" /> Remember keys in this browser</label>
       <div class="row">

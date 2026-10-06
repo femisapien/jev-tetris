@@ -29,8 +29,10 @@ const ui = {
   jevKey: $("jevKey"),
   haikuKey: $("haikuKey"),
   geminiKey: $("geminiKey"),
+  lunaKey: $("lunaKey"),
   haikuKeyField: $("haikuKeyField"),
   geminiKeyField: $("geminiKeyField"),
+  lunaKeyField: $("lunaKeyField"),
   layaField: $("layaField"),
   layaNote: $("layaNote"),
   layaEndpoint: $("layaEndpoint"),
@@ -129,7 +131,7 @@ function opponentChoice() {
 
 function opponentKey() {
   const v = ui.opponent.value;
-  return (v === "gemini" ? ui.geminiKey : v === "laya" ? ui.layaEndpoint : ui.haikuKey).value.trim();
+  return (v === "gemini" ? ui.geminiKey : v === "luna" ? ui.lunaKey : v === "laya" ? ui.layaEndpoint : ui.haikuKey).value.trim();
 }
 
 function renderOpponent() {
@@ -140,6 +142,7 @@ function renderOpponent() {
   const v = ui.opponent.value;
   ui.haikuKeyField.classList.toggle("hidden", v !== "haiku");
   ui.geminiKeyField.classList.toggle("hidden", v !== "gemini");
+  ui.lunaKeyField.classList.toggle("hidden", v !== "luna");
   ui.layaField.classList.toggle("hidden", v !== "laya");
   ui.layaNote.classList.toggle("hidden", v !== "laya");
   document.title = `Jev vs ${opp.name}`;
@@ -216,6 +219,7 @@ function persistKeys() {
       localStorage.setItem(STORAGE.jev, ui.jevKey.value.trim());
       localStorage.setItem(STORAGE.haiku, ui.haikuKey.value.trim());
       localStorage.setItem(STORAGE.gemini, ui.geminiKey.value.trim());
+      localStorage.setItem(STORAGE.luna, ui.lunaKey.value.trim());
       localStorage.setItem(STORAGE.laya, ui.layaEndpoint.value.trim());
     } else {
       for (const k of Object.values(STORAGE)) localStorage.removeItem(k);
@@ -243,12 +247,14 @@ try {
   const j = localStorage.getItem(STORAGE.jev);
   const h = localStorage.getItem(STORAGE.haiku);
   const g = localStorage.getItem(STORAGE.gemini);
+  const o = localStorage.getItem(STORAGE.luna);
   const l = localStorage.getItem(STORAGE.laya);
   if (j) ui.jevKey.value = j;
   if (h) ui.haikuKey.value = h;
   if (g) ui.geminiKey.value = g;
+  if (o) ui.lunaKey.value = o;
   if (l) ui.layaEndpoint.value = l;
-  if (j || h || g) ui.remember.checked = true;
+  if (j || h || g || o) ui.remember.checked = true;
 } catch {
   /* storage unavailable */
 }

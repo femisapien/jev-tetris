@@ -69,6 +69,7 @@ body.present-page { background: #0b0e15; overflow: hidden; min-height: 100vh; }
 .rounds li .w.jev { color: var(--accent-2); }
 .rounds li .w.haiku { color: #f4a340; }
 .rounds li .w.gemini { color: #7fb0ff; }
+.rounds li .w.luna { color: #8cffc8; }
 .rounds li .w.laya { color: #f5d547; }
 .rounds li .w.draw { color: var(--muted); }
 .rounds li .t, .rounds li .l { text-align: right; color: var(--muted); }
