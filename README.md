@@ -70,6 +70,17 @@ switches to reproducible seeds (seed, seed+1, …) instead of random ones.
 
 ### Results so far
 
+**Jev vs GPT-6 Luna** (per-move harness on this branch, worded situation, best of 3)
+
+| Round | Result | Jev | GPT-6 Luna |
+| --- | --- | --- | --- |
+| 1 and 2 | Luna wins 2–0: Jev topped out at 0:03 and 0:02 | 23 pieces, 1.3 moves/piece, 212 ms/move, $0.0011 | 3 pieces, 13.7 moves/piece, 155 ms/move, $0.0021 |
+
+Measured directly, the Decisions API answered the same 505-token request in 200 to 280 ms on most
+calls, with occasional multi-second outliers and one gateway timeout in ten calls. In the game Luna
+mostly moved and rotated and let gravity land the piece; Jev mostly dropped at once.
+
+
 Seed 42, one run each. Jev is not fully deterministic between runs, so treat these as samples.
 These results were recorded with the earlier harness, where each model chose a resting spot once
 per piece and the code played the moves; with per-move control every model plays differently.
